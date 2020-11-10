@@ -2,6 +2,7 @@ package main
 
 import (
 	"challenge/book"
+	"challenge/stats"
 	"flag"
 	"fmt"
 	"log"
@@ -17,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer f.Close()
-	b := book.New(f)
+	b := book.New(f, stats.Stats{})
 	switch *option {
 	case 1:
 		fmt.Println(b.Read())
