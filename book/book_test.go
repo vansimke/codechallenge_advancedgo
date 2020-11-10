@@ -71,33 +71,29 @@ func TestBook_ReadLines(t *testing.T) {
 	})
 }
 
+type mockWordFreqCalc struct {
+	returnValue map[string]int
+}
+
+func (wfc mockWordFreqCalc) WordFrequency(lines []string) map[string]int {
+	return wfc.returnValue
+}
+
 func TestBook_WordFrequency(t *testing.T) {
-	data := []struct {
-		have string
-		want map[string]int
-	}{
-		{
-			have: "",
-			want: map[string]int{},
-		},
-		{
-			have: "foo foo foo",
-			want: map[string]int{"foo": 3},
-		}, {
-			have: "foo bar baz\nfoo baz",
-			want: map[string]int{"foo": 2, "bar": 1, "baz": 2},
-		},
+	expected := map[string]int{
+		"foo": 42,
+		"bar": 2,
+		"baz": 999,
 	}
-	for _, item := range data {
-		b := book.New(strings.NewReader(item.have), stats.Stats{})
-		got := b.WordFrequency()
-		if len(got) != len(item.want) {
-			t.Fatalf("Incorrect number of entries returned. Expected: %v, got: %v for input:\n%v", len(item.want), len(got), item.have)
-		}
-		for k := range item.want {
-			if got[k] != item.want[k] {
-				t.Errorf("Incorrect frequency. Expected: %v, got: %v\nFor input:\n%v", item.want[k], got[k], item.have)
-			}
+	b := book.New(strings.NewReader(""), mockWordFreqCalc{expected})
+	got := b.WordFrequency()
+	if len(got) != len(expected) {
+		t.Fatal("Word frequency map doesn't have expected number of entries")
+	}
+	for k := range expected {
+		if expected[k] != got[k] {
+			t.Errorf("Unexpected frequency count for key: %v.\nExpected: %v\nGot: %v", k, expected[k], got[k])
 		}
 	}
+
 }

@@ -2,15 +2,18 @@ package book
 
 import (
 	"bufio"
-	"challenge/stats"
 	"errors"
 	"io"
 	"strings"
 )
 
+type WordFreqCalc interface {
+	WordFrequency([]string) map[string]int
+}
+
 type Book struct {
-	contents []string
-	stats    stats.Stats
+	contents     []string
+	wordFreqCalc WordFreqCalc
 }
 
 func (b Book) Read() string {
@@ -33,16 +36,20 @@ func (b Book) ReadLines(start, num uint) ([]string, error) {
 }
 
 func (b Book) WordFrequency() map[string]int {
-	return b.stats.WordFrequency(b.contents)
+	return b.wordFreqCalc.WordFrequency(b.contents)
 }
 
-func New(source io.Reader, stats stats.Stats) *Book {
+func New(source io.Reader, wordFreqCalc WordFreqCalc) *Book {
 	s := bufio.NewScanner(source)
 
 	// give the contents slice a reasonable starting size to limit reallocations
-	b := Book{contents: make([]string, 0, 5000), stats: stats}
+	b := Book{
+		contents:     make([]string, 0, 5000),
+		wordFreqCalc: wordFreqCalc,
+	}
 	for s.Scan() {
 		b.contents = append(b.contents, s.Text())
 	}
+
 	return &b
 }
