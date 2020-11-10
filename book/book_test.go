@@ -2,43 +2,44 @@ package book_test
 
 import (
 	"challenge/book"
+	"challenge/stats"
 	"strings"
 	"testing"
 )
 
-func TestBook(t *testing.T) {
-	t.Run("Read", func(t *testing.T) {
-		data := []struct {
-			have string
-			want string
-		}{
-			{
-				have: "",
-				want: "",
-			},
-			{
-				have: "one line",
-				want: "one line",
-			}, {
-				have: "line one\nline two",
-				want: "line one\nline two",
-			},
+func TestBook_Read(t *testing.T) {
+	data := []struct {
+		have string
+		want string
+	}{
+		{
+			have: "",
+			want: "",
+		},
+		{
+			have: "one line",
+			want: "one line",
+		}, {
+			have: "line one\nline two",
+			want: "line one\nline two",
+		},
+	}
+	for _, item := range data {
+		b := book.New(strings.NewReader(item.have), stats.Stats{})
+		if content := b.Read(); content != item.want {
+			t.Errorf("Wanted: %v, got: %v", item.want, content)
 		}
-		for _, item := range data {
-			b := book.New(strings.NewReader(item.have))
-			if content := b.Read(); content != item.want {
-				t.Errorf("Wanted: %v, got: %v", item.want, content)
-			}
-		}
-	})
-	t.Run("ReadLines_no_content", func(t *testing.T) {
-		b := book.New(strings.NewReader(""))
+	}
+}
+func TestBook_ReadLines(t *testing.T) {
+	t.Run("no_content", func(t *testing.T) {
+		b := book.New(strings.NewReader(""), stats.Stats{})
 		content, err := b.ReadLines(0, 20)
 		if err == nil {
 			t.Fatalf("Expected error when reading lines from empty book. Got: %v", content)
 		}
 	})
-	t.Run("ReadLines", func(t *testing.T) {
+	t.Run("with content", func(t *testing.T) {
 		data := []struct {
 			have string
 			want []string
@@ -52,7 +53,7 @@ func TestBook(t *testing.T) {
 			},
 		}
 		for _, item := range data {
-			b := book.New(strings.NewReader(item.have))
+			b := book.New(strings.NewReader(item.have), stats.Stats{})
 			content, err := b.ReadLines(0, 20)
 			if err != nil {
 				t.Fatal(err)
@@ -68,4 +69,35 @@ func TestBook(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestBook_WordFrequency(t *testing.T) {
+	data := []struct {
+		have string
+		want map[string]int
+	}{
+		{
+			have: "",
+			want: map[string]int{},
+		},
+		{
+			have: "foo foo foo",
+			want: map[string]int{"foo": 3},
+		}, {
+			have: "foo bar baz\nfoo baz",
+			want: map[string]int{"foo": 2, "bar": 1, "baz": 2},
+		},
+	}
+	for _, item := range data {
+		b := book.New(strings.NewReader(item.have), stats.Stats{})
+		got := b.WordFrequency()
+		if len(got) != len(item.want) {
+			t.Fatalf("Incorrect number of entries returned. Expected: %v, got: %v for input:\n%v", len(item.want), len(got), item.have)
+		}
+		for k := range item.want {
+			if got[k] != item.want[k] {
+				t.Errorf("Incorrect frequency. Expected: %v, got: %v\nFor input:\n%v", item.want[k], got[k], item.have)
+			}
+		}
+	}
 }
